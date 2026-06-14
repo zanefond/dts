@@ -1,0 +1,49 @@
+name: Build RK3566 DTB
+
+on:
+  push:
+    paths:
+      - 'rk3566-evb1-ddr4-v10.dts'
+      - '.github/workflows/build-dtb.yml'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-dtb:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout DTS repository
+        uses: actions/checkout@v4
+
+      - name: Clone Linux 6.1 kernel (shallow)
+        run: |
+          git clone --depth=1 --branch=linux-6.1.y \
+            https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git \
+            linux-kernel
+
+      - name: Copy DTS to kernel tree
+        run: |
+          cp rk3566-evb1-ddr4-v10.dts \
+             linux-kernel/arch/arm64/boot/dts/rockchip/
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc-aarch64-linux-gnu \
+            flex bison \
+            bc \
+            device-tree-compiler
+
+      - name: Build DTB
+        run: |
+          cd linux-kernel
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
+            rockchip/rk3566-evb1-ddr4-v10.dtb
+
+      - name: Upload DTB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rk3566-evb1-ddr4-v10
+          path: linux-kernel/arch/arm64/boot/dts/rockchip/rk3566-evb1-ddr4-v10.dtb
