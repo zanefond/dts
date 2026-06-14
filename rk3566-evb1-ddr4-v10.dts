@@ -1089,6 +1089,16 @@
 
 &edp {
 	status = "okay";
+
+	ports {
+		port@1 {
+			reg = <1>;
+
+			edp_out: endpoint {
+				remote-endpoint = <&panel_in_edp>;
+			};
+		};
+	};
 };
 
 &edp_phy {
