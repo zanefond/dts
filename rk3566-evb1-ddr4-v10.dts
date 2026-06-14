@@ -1230,14 +1230,14 @@
 
 	can2 {
 		can2m1_pins: can2m1-pins {
-			rockchip,pins = <2 RK_PA9 4 &pcfg_pull_none>,
-					<2 RK_PA10 4 &pcfg_pull_none>;
+			rockchip,pins = <2 RK_PB1 4 &pcfg_pull_none>,
+					<2 RK_PB2 4 &pcfg_pull_none>;
 		};
 	};
 
 	clk32k {
 		clk32k_out0: clk32k-out0 {
-			rockchip,pins = <0 RK_PA8 2 &pcfg_pull_none>;
+			rockchip,pins = <0 RK_PB0 2 &pcfg_pull_none>;
 		};
 	};
 
@@ -1395,7 +1395,7 @@
 
 		/omit-if-no-ref/
 		sdmmc1_clk: sdmmc1-clk {
-			rockchip,pins = <2 RK_PA8 1 &pcfg_pull_up_drv_level_2>;
+			rockchip,pins = <2 RK_PB0 1 &pcfg_pull_up_drv_level_2>;
 		};
 
 		/omit-if-no-ref/
@@ -1406,7 +1406,7 @@
 
 	sdio-pwrseq {
 		wifi_enable_h: wifi-enable-h {
-			rockchip,pins = <2 RK_PA9 0 &pcfg_pull_none>;
+			rockchip,pins = <2 RK_PB1 0 &pcfg_pull_none>;
 		};
 	};
 
@@ -1512,7 +1512,7 @@
 		/omit-if-no-ref/
 		uart9m0_xfer: uart9m0-xfer {
 			rockchip,pins = <2 RK_PA7 3 &pcfg_pull_up>,
-					<2 RK_PA8 3 &pcfg_pull_up>;
+					<2 RK_PB0 3 &pcfg_pull_up>;
 		};
 	};
 
