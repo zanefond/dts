@@ -16,10 +16,10 @@ jobs:
       - name: Checkout DTS repository
         uses: actions/checkout@v4
 
-      - name: Clone Linux 6.1 kernel (shallow)
+      - name: Clone Rockchip BSP kernel (shallow)
         run: |
-          git clone --depth=1 --branch=linux-6.1.y \
-            https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git \
+          git clone --depth=1 --branch=develop-6.1 \
+            https://github.com/rockchip-linux/kernel.git \
             linux-kernel
 
       - name: Copy DTS to kernel tree
