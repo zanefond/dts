@@ -211,15 +211,9 @@
 		width-mm = <344>;
 		height-mm = <193>;
 
-		ports {
-			#address-cells = <1>;
-			#size-cells = <0>;
-
-			port@0 {
-				reg = <0>;
-				panel_in_edp: endpoint {
-					remote-endpoint = <&edp_out_panel>;
-				};
+		port {
+			panel_in_edp: endpoint {
+				remote-endpoint = <&edp_out>;
 			};
 		};
 	};
@@ -814,53 +808,6 @@
 &i2c2 {
 	status = "okay";
 
-	gc2053: gc2053@37 {
-		compatible = "galaxycore,gc2053";
-		reg = <0x37>;
-		status = "disabled";
-		clocks = <&cru CLK_CIF_OUT>;
-		clock-names = "xvclk";
-		power-domains = <&power RK3568_PD_VI>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&cam_clkout0>;
-		reset-gpios = <&gpio4 RK_PA5 GPIO_ACTIVE_LOW>;
-		pwdn-gpios = <&gpio3 RK_PD0 GPIO_ACTIVE_LOW>;
-		rockchip,camera-module-index = <1>;
-		rockchip,camera-module-facing = "front";
-		rockchip,camera-module-name = "YT-RV1109-2-V1";
-		rockchip,camera-module-lens-name = "40IR-2MP-F20";
-
-		port {
-			gc2053_out: endpoint {
-				remote-endpoint = <&dphy1_in>;
-				data-lanes = <1 2>;
-			};
-		};
-	};
-
-	gc2093: gc2093@7e {
-		compatible = "galaxycore,gc2093";
-		status = "disabled";
-		reg = <0x7e>;
-		clocks = <&cru CLK_CIF_OUT>;
-		clock-names = "xvclk";
-		pinctrl-names = "default";
-		pinctrl-0 = <&cam_clkout1>;
-		power-domains = <&power RK3568_PD_VI>;
-		reset-gpios = <&gpio4 RK_PB0 GPIO_ACTIVE_LOW>;
-		pwdn-gpios = <&gpio3 RK_PD2 GPIO_ACTIVE_LOW>;
-		rockchip,camera-module-index = <0>;
-		rockchip,camera-module-facing = "back";
-		rockchip,camera-module-name = "YT-RV1109-2-V1";
-		rockchip,camera-module-lens-name = "40IR-2MP-F20";
-
-		port {
-			gc2093_out: endpoint {
-				remote-endpoint = <&dphy2_in>;
-				data-lanes = <1 2>;
-			};
-		};
-	};
 };
 
 &i2c4 {
