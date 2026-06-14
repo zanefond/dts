@@ -1295,10 +1295,6 @@
 		};
 	};
 
-	i2s1m0_mclk: i2s1m0-mclk {
-		rockchip,pins = <1 RK_PA2 1 &pcfg_pull_none>;
-	};
-
 	lcdc {
 		lcdc_ctl: lcdc-ctl {
 			rockchip,pins = <3 RK_PA0 1 &pcfg_pull_none>,
@@ -1419,10 +1415,6 @@
 	tsadc {
 		tsadc_shutorg: tsadc-shutorg {
 			rockchip,pins = <0 RK_PA1 2 &pcfg_pull_none>;
-		};
-
-		tsadc_gpio_func: tsadc-gpio-func {
-			rockchip,pins = <0 RK_PA1 0 &pcfg_pull_none>;
 		};
 	};
 
