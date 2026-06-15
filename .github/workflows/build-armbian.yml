@@ -155,7 +155,7 @@ jobs:
           BOARD_VENDOR="rockchip"
           BOOT_SOC="rk3566"
           BOARDFAMILY="rk35xx"
-          BOOTCONFIG="generic-rk3568_defconfig"
+          BOOTCONFIG="rk3568_defconfig"
           KERNEL_TARGET="vendor"
           FULL_DESKTOP="no"
           BOOT_LOGO="no"
