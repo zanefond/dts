@@ -39,98 +39,85 @@ jobs:
           echo "=== After cleanup ==="
           df -h
 
-      - name: Install DTB build dependencies
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq gcc-aarch64-linux-gnu flex bison bc device-tree-compiler
-
-      - name: Compile DTB from Rockchip BSP kernel
-        run: |
-          echo "=== Cloning Rockchip BSP kernel (develop-6.1) ==="
-          git clone --depth=1 --branch=develop-6.1 \
-            https://github.com/rockchip-linux/kernel.git \
-            linux-kernel
-
-          echo "=== Copying DTS to kernel tree ==="
-          cp rk3566-evb1-ddr4-v10.dts \
-             linux-kernel/arch/arm64/boot/dts/rockchip/
-
-          echo "=== Building DTB ==="
-          cd linux-kernel
-          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
-          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
-            rockchip/rk3566-evb1-ddr4-v10.dtb
-          cd ..
-
-          echo "=== Saving compiled DTB ==="
-          mkdir -p dtb-output
-          cp linux-kernel/arch/arm64/boot/dts/rockchip/rk3566-evb1-ddr4-v10.dtb \
-             dtb-output/
-          ls -la dtb-output/
-
-          echo "=== Cleaning up BSP kernel source to free space ==="
-          rm -rf linux-kernel
-          df -h
-
       - name: Clone Armbian build framework
         run: |
           echo "=== Cloning Armbian build framework ==="
           git clone --depth=1 https://github.com/armbian/build.git armbian-build
-          echo "=== Armbian build framework ready ==="
-          ls armbian-build/
+          echo "=== Framework ready ==="
 
-      - name: Configure board and userpatches
+      - name: Create kernel userpatch (add board DTS)
         run: |
-          echo "=== Creating board configuration ==="
-          cat > armbian-build/config/boards/rk3566-evb1-ddr4-v10.csc << 'CSCEOF'
-          # Rockchip RK3566 EVB1 DDR4 V10
-          # PMIC: RK809 + TCS4525 (vdd_cpu)
-          # Memory: DDR4
-          # Storage: eMMC + SD card
-          # Ethernet: RTL8111H via PCIe
-          # WiFi/BT: RTL8821CS (SDIO + UART)
-          BOARD_NAME="RK3566 EVB1 DDR4 V10"
-          BOARDFAMILY="rockchip-rk356x"
-          BOOTCONFIG="rk3566-evb_defconfig"
-          KERNEL_TARGET="vendor"
-          FULL_DESKTOP="no"
-          BOOT_LOGO="no"
-          BOOT_FDT_FILE="rockchip/rk3566-evb1-ddr4-v10.dtb"
-          CSCEOF
+          echo "=== Creating kernel patch directory ==="
+          KERNEL_PATCH_DIR="armbian-build/userpatches/kernel/archive/rk35xx-vendor-6.1"
+          mkdir -p "${KERNEL_PATCH_DIR}"
 
-          echo "=== Staging pre-compiled DTB ==="
-          mkdir -p armbian-build/userpatches/dtb/
-          cp dtb-output/rk3566-evb1-ddr4-v10.dtb \
-             armbian-build/userpatches/dtb/
+          echo "=== Copying board DTS to kernel source ==="
+          # Copy DTS into a patch that places it in arch/arm64/boot/dts/rockchip/
+          cp rk3566-evb1-ddr4-v10.dts "${KERNEL_PATCH_DIR}/"
 
-          echo "=== Creating customize-image.sh hook ==="
+          echo "=== Creating Makefile patch to compile our DTB ==="
+          cat > "${KERNEL_PATCH_DIR}/add-board-dtb.patch" << 'PATCHEOF'
+          diff --git a/arch/arm64/boot/dts/rockchip/Makefile b/arch/arm64/boot/dts/rockchip/Makefile
+          index 0000000..0000000 100644
+          --- a/arch/arm64/boot/dts/rockchip/Makefile
+          +++ b/arch/arm64/boot/dts/rockchip/Makefile
+          @@ -0,0 +1,1 @@
+          +dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3566-evb1-ddr4-v10.dtb
+          PATCHEOF
+
+          # The real approach: use a script hook instead of a patch
+          # because the exact Makefile content varies between kernel versions.
+          # Use customize-kernel.sh which runs after kernel source is prepared.
+          cat > armbian-build/userpatches/customize-kernel.sh << 'HOOKEOF'
+          #!/bin/bash
+          #
+          # Armbian customize-kernel.sh hook
+          # Adds our board DTS to the kernel tree and registers it for compilation
+          #
+
+          echo "--- Adding RK3566 EVB1 DDR4 V10 DTS to kernel tree ---"
+
+          DTS_SRC="${SRC}/userpatches/kernel/archive/rk35xx-vendor-6.1/rk3566-evb1-ddr4-v10.dts"
+          DTS_DST="arch/arm64/boot/dts/rockchip/rk3566-evb1-ddr4-v10.dtb"
+          MAKEFILE="arch/arm64/boot/dts/rockchip/Makefile"
+
+          # Copy the DTS file
+          if [ -f "${DTS_SRC}" ]; then
+            cp -v "${SRC}/userpatches/kernel/archive/rk35xx-vendor-6.1/rk3566-evb1-ddr4-v10.dts" \
+               arch/arm64/boot/dts/rockchip/
+            echo "DTS file copied to kernel tree."
+          else
+            echo "WARNING: DTS source not found at ${DTS_SRC}"
+            exit 1
+          fi
+
+          # Add compilation target to Makefile if not already present
+          if ! grep -q "rk3566-evb1-ddr4-v10.dtb" "${MAKEFILE}"; then
+            echo 'dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3566-evb1-ddr4-v10.dtb' >> "${MAKEFILE}"
+            echo "Makefile updated with new DTB target."
+          else
+            echo "DTB target already exists in Makefile."
+          fi
+
+          echo "--- Kernel customization complete ---"
+          HOOKEOF
+          chmod +x armbian-build/userpatches/customize-kernel.sh
+          echo "customize-kernel.sh created."
+
+      - name: Create image customization hook
+        run: |
           cat > armbian-build/userpatches/customize-image.sh << 'HOOKEOF'
           #!/bin/bash
           #
           # Armbian customize-image.sh hook
-          # Injects the pre-compiled board DTB and configures extlinux boot
+          # Ensures the boot configuration uses our board DTB
           #
 
           echo "--- Customizing image for RK3566 EVB1 DDR4 V10 ---"
 
-          # Create DTB directory on the boot partition
-          mkdir -p ${SDCARD}/boot/dtb/rockchip/
-
-          # Copy pre-compiled board DTB
-          if [ -f "${SRC}/userpatches/dtb/rk3566-evb1-ddr4-v10.dtb" ]; then
-            cp -v ${SRC}/userpatches/dtb/rk3566-evb1-ddr4-v10.dtb \
-               ${SDCARD}/boot/dtb/rockchip/
-            echo "DTB copied successfully."
-          else
-            echo "WARNING: Pre-compiled DTB not found at ${SRC}/userpatches/dtb/rk3566-evb1-ddr4-v10.dtb"
-            exit 1
-          fi
-
           # Set the boot configuration to use our DTB
           if [ -f "${SDCARD}/boot/armbianEnv.txt" ]; then
-            # Remove any existing fdtfile line
             sed -i '/^fdtfile=/d' ${SDCARD}/boot/armbianEnv.txt
-            # Add our board's fdtfile
             echo "fdtfile=rockchip/rk3566-evb1-ddr4-v10.dtb" >> ${SDCARD}/boot/armbianEnv.txt
             echo "armbianEnv.txt updated."
             echo "=== Final armbianEnv.txt ==="
@@ -142,12 +129,32 @@ jobs:
           echo "--- Image customization complete ---"
           HOOKEOF
           chmod +x armbian-build/userpatches/customize-image.sh
+          echo "customize-image.sh created."
 
-          echo "=== Configuration complete ==="
-          echo "Board config:"
+      - name: Configure board
+        run: |
+          cat > armbian-build/config/boards/rk3566-evb1-ddr4-v10.csc << 'CSCEOF'
+          # Rockchip RK3566 EVB1 DDR4 V10
+          # PMIC: RK809 + TCS4525 (vdd_cpu)
+          # Memory: DDR4
+          # Storage: eMMC + SD card
+          # Ethernet: RTL8111H via PCIe
+          # WiFi/BT: RTL8821CS (SDIO + UART)
+          BOARD_NAME="RK3566 EVB1 DDR4 V10"
+          BOARD_VENDOR="rockchip"
+          BOOT_SOC="rk3566"
+          BOARDFAMILY="rk35xx"
+          BOOTCONFIG="generic-rk3568_defconfig"
+          KERNEL_TARGET="vendor"
+          FULL_DESKTOP="no"
+          BOOT_LOGO="no"
+          BOOT_SCENARIO="spl-blobs"
+          BOOT_FDT_FILE="rockchip/rk3566-evb1-ddr4-v10.dtb"
+          IMAGE_PARTITION_TABLE="gpt"
+          CSCEOF
+
+          echo "=== Board configuration ==="
           cat armbian-build/config/boards/rk3566-evb1-ddr4-v10.csc
-          echo "Hook script:"
-          cat armbian-build/userpatches/customize-image.sh
 
       - name: Build Armbian image
         run: |
@@ -155,11 +162,11 @@ jobs:
 
           echo "=== Starting Armbian build ==="
           echo "Board: rk3566-evb1-ddr4-v10"
-          echo "Branch: vendor (Rockchip BSP 6.1 kernel)"
+          echo "Family: rk35xx"
+          echo "Kernel: vendor (BSP 6.1 rk-6.1-rkr5.1)"
           echo "Release: ${{ github.event.inputs.release || 'bookworm' }}"
           echo "Build type: ${{ github.event.inputs.build_type || 'minimal' }}"
 
-          # Determine BUILD_MINIMAL flag
           if [ "${{ github.event.inputs.build_type || 'minimal' }}" = "minimal" ]; then
             MINIMAL_FLAG="BUILD_MINIMAL=yes"
           else
