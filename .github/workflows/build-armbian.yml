@@ -46,7 +46,9 @@ jobs:
           sudo update-binfmts --enable qemu-arm
           sudo update-binfmts --enable qemu-aarch64
           echo "=== QEMU binfmt ready ==="
-          update-binfmts --display | grep -E "qemu-arm|qemu-aarch64"
+          ls -la /proc/sys/fs/binfmt_misc/qemu-*
+          echo "---"
+          cat /proc/sys/fs/binfmt_misc/qemu-aarch64 2>/dev/null || echo "(qemu-aarch64 status not readable via proc)"
 
       - name: Clone Armbian build framework
         run: |
