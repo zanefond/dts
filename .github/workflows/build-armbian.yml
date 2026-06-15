@@ -115,6 +115,79 @@ jobs:
           chmod +x armbian-build/userpatches/customize-kernel.sh
           echo "customize-kernel.sh created."
 
+      - name: Create U-Boot OPTEE disable patch
+        run: |
+          echo "=== Creating U-Boot userpatch to disable OPTEE ==="
+
+          # Create U-Boot patch directories (Armbian may use various naming conventions)
+          UBOOT_PATCH_DIR1="armbian-build/userpatches/u-boot/rk35xx"
+          UBOOT_PATCH_DIR2="armbian-build/userpatches/u-boot/u-boot-rockchip"
+          mkdir -p "${UBOOT_PATCH_DIR1}" "${UBOOT_PATCH_DIR2}"
+
+          # Create a patch that disables OPTEE_CLIENT in the rk3568_defconfig
+          cat > disable-optee.patch << 'PATCHEOF'
+          diff --git a/configs/rk3568_defconfig b/configs/rk3568_defconfig
+          index 0000000..0000000 100644
+          --- a/configs/rk3568_defconfig
+          +++ b/configs/rk3568_defconfig
+          @@ -0,0 +1,3 @@
+          +# CONFIG_OPTEE is not set
+          +# CONFIG_OPTEE_CLIENT is not set
+          +# CONFIG_OPTEE_TA_AVB is not set
+          PATCHEOF
+
+          # Place the patch in both possible locations
+          cp disable-optee.patch "${UBOOT_PATCH_DIR1}/"
+          cp disable-optee.patch "${UBOOT_PATCH_DIR2}/"
+          cp disable-optee.patch "armbian-build/userpatches/u-boot/"
+
+          echo "disable-optee.patch placed in userpatches/u-boot/ locations."
+
+          # Also create a customize-uboot.sh hook as a fallback (runs after U-Boot source is prepared)
+          cat > armbian-build/userpatches/customize-uboot.sh << 'HOOKEOF'
+          #!/bin/bash
+          #
+          # Armbian customize-uboot.sh hook (fallback)
+          # Disables OPTEE support in U-Boot to avoid the "optee api revision is too low" error
+          #
+
+          echo "--- Disabling OPTEE in U-Boot configuration ---"
+
+          # Find the U-Boot defconfig and disable OPTEE
+          if [ -f "configs/rk3568_defconfig" ]; then
+            # Remove any existing OPTEE config lines
+            sed -i '/CONFIG_OPTEE/d' configs/rk3568_defconfig
+            # Add explicit disable lines
+            echo "# CONFIG_OPTEE is not set" >> configs/rk3568_defconfig
+            echo "# CONFIG_OPTEE_CLIENT is not set" >> configs/rk3568_defconfig
+            echo "# CONFIG_OPTEE_TA_AVB is not set" >> configs/rk3568_defconfig
+            echo "OPTEE disabled in configs/rk3568_defconfig"
+          else
+            echo "WARNING: configs/rk3568_defconfig not found, trying alternate paths..."
+            # Try to find the defconfig
+            DEFCONFIG=$(find . -name "rk3568_defconfig" -path "*/configs/*" 2>/dev/null | head -1)
+            if [ -n "${DEFCONFIG}" ]; then
+              sed -i '/CONFIG_OPTEE/d' "${DEFCONFIG}"
+              echo "# CONFIG_OPTEE is not set" >> "${DEFCONFIG}"
+              echo "# CONFIG_OPTEE_CLIENT is not set" >> "${DEFCONFIG}"
+              echo "# CONFIG_OPTEE_TA_AVB is not set" >> "${DEFCONFIG}"
+              echo "OPTEE disabled in ${DEFCONFIG}"
+            fi
+          fi
+
+          # Also patch the .config if it exists (already configured)
+          if [ -f ".config" ]; then
+            sed -i 's/^CONFIG_OPTEE=y$/# CONFIG_OPTEE is not set/' .config
+            sed -i 's/^CONFIG_OPTEE_CLIENT=y$/# CONFIG_OPTEE_CLIENT is not set/' .config
+            sed -i 's/^CONFIG_OPTEE_TA_AVB=y$/# CONFIG_OPTEE_TA_AVB is not set/' .config
+            echo "OPTEE disabled in .config"
+          fi
+
+          echo "--- U-Boot OPTEE disable complete ---"
+          HOOKEOF
+          chmod +x armbian-build/userpatches/customize-uboot.sh
+          echo "customize-uboot.sh created."
+
       - name: Create image customization hook
         run: |
           cat > armbian-build/userpatches/customize-image.sh << 'HOOKEOF'
