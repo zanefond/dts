@@ -39,6 +39,15 @@ jobs:
           echo "=== After cleanup ==="
           df -h
 
+      - name: Install QEMU and binfmt support (arm64 cross-build)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq qemu-user-static binfmt-support
+          sudo update-binfmts --enable qemu-arm
+          sudo update-binfmts --enable qemu-aarch64
+          echo "=== QEMU binfmt ready ==="
+          update-binfmts --display | grep -E "qemu-arm|qemu-aarch64"
+
       - name: Clone Armbian build framework
         run: |
           echo "=== Cloning Armbian build framework ==="
