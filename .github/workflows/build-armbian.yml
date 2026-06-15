@@ -1,0 +1,197 @@
+name: Build Armbian Image for RK3566 EVB1 DDR4 V10
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Debian release'
+        required: true
+        type: choice
+        default: 'bookworm'
+        options:
+          - bookworm
+          - bullseye
+      build_type:
+        description: 'Build type'
+        required: true
+        type: choice
+        default: 'minimal'
+        options:
+          - minimal
+          - server
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout DTS repository
+        uses: actions/checkout@v4
+
+      - name: Free disk space
+        run: |
+          echo "=== Before cleanup ==="
+          df -h
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup
+          sudo apt-get clean
+          sudo docker image prune -a -f 2>/dev/null || true
+          echo "=== After cleanup ==="
+          df -h
+
+      - name: Install DTB build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-aarch64-linux-gnu flex bison bc device-tree-compiler
+
+      - name: Compile DTB from Rockchip BSP kernel
+        run: |
+          echo "=== Cloning Rockchip BSP kernel (develop-6.1) ==="
+          git clone --depth=1 --branch=develop-6.1 \
+            https://github.com/rockchip-linux/kernel.git \
+            linux-kernel
+
+          echo "=== Copying DTS to kernel tree ==="
+          cp rk3566-evb1-ddr4-v10.dts \
+             linux-kernel/arch/arm64/boot/dts/rockchip/
+
+          echo "=== Building DTB ==="
+          cd linux-kernel
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
+            rockchip/rk3566-evb1-ddr4-v10.dtb
+          cd ..
+
+          echo "=== Saving compiled DTB ==="
+          mkdir -p dtb-output
+          cp linux-kernel/arch/arm64/boot/dts/rockchip/rk3566-evb1-ddr4-v10.dtb \
+             dtb-output/
+          ls -la dtb-output/
+
+          echo "=== Cleaning up BSP kernel source to free space ==="
+          rm -rf linux-kernel
+          df -h
+
+      - name: Clone Armbian build framework
+        run: |
+          echo "=== Cloning Armbian build framework ==="
+          git clone --depth=1 https://github.com/armbian/build.git armbian-build
+          echo "=== Armbian build framework ready ==="
+          ls armbian-build/
+
+      - name: Configure board and userpatches
+        run: |
+          echo "=== Creating board configuration ==="
+          cat > armbian-build/config/boards/rk3566-evb1-ddr4-v10.csc << 'CSCEOF'
+          # Rockchip RK3566 EVB1 DDR4 V10
+          # PMIC: RK809 + TCS4525 (vdd_cpu)
+          # Memory: DDR4
+          # Storage: eMMC + SD card
+          # Ethernet: RTL8111H via PCIe
+          # WiFi/BT: RTL8821CS (SDIO + UART)
+          BOARD_NAME="RK3566 EVB1 DDR4 V10"
+          BOARDFAMILY="rockchip-rk356x"
+          BOOTCONFIG="rk3566-evb_defconfig"
+          KERNEL_TARGET="vendor"
+          FULL_DESKTOP="no"
+          BOOT_LOGO="no"
+          BOOT_FDT_FILE="rockchip/rk3566-evb1-ddr4-v10.dtb"
+          CSCEOF
+
+          echo "=== Staging pre-compiled DTB ==="
+          mkdir -p armbian-build/userpatches/dtb/
+          cp dtb-output/rk3566-evb1-ddr4-v10.dtb \
+             armbian-build/userpatches/dtb/
+
+          echo "=== Creating customize-image.sh hook ==="
+          cat > armbian-build/userpatches/customize-image.sh << 'HOOKEOF'
+          #!/bin/bash
+          #
+          # Armbian customize-image.sh hook
+          # Injects the pre-compiled board DTB and configures extlinux boot
+          #
+
+          echo "--- Customizing image for RK3566 EVB1 DDR4 V10 ---"
+
+          # Create DTB directory on the boot partition
+          mkdir -p ${SDCARD}/boot/dtb/rockchip/
+
+          # Copy pre-compiled board DTB
+          if [ -f "${SRC}/userpatches/dtb/rk3566-evb1-ddr4-v10.dtb" ]; then
+            cp -v ${SRC}/userpatches/dtb/rk3566-evb1-ddr4-v10.dtb \
+               ${SDCARD}/boot/dtb/rockchip/
+            echo "DTB copied successfully."
+          else
+            echo "WARNING: Pre-compiled DTB not found at ${SRC}/userpatches/dtb/rk3566-evb1-ddr4-v10.dtb"
+            exit 1
+          fi
+
+          # Set the boot configuration to use our DTB
+          if [ -f "${SDCARD}/boot/armbianEnv.txt" ]; then
+            # Remove any existing fdtfile line
+            sed -i '/^fdtfile=/d' ${SDCARD}/boot/armbianEnv.txt
+            # Add our board's fdtfile
+            echo "fdtfile=rockchip/rk3566-evb1-ddr4-v10.dtb" >> ${SDCARD}/boot/armbianEnv.txt
+            echo "armbianEnv.txt updated."
+            echo "=== Final armbianEnv.txt ==="
+            cat ${SDCARD}/boot/armbianEnv.txt
+          else
+            echo "WARNING: armbianEnv.txt not found"
+          fi
+
+          echo "--- Image customization complete ---"
+          HOOKEOF
+          chmod +x armbian-build/userpatches/customize-image.sh
+
+          echo "=== Configuration complete ==="
+          echo "Board config:"
+          cat armbian-build/config/boards/rk3566-evb1-ddr4-v10.csc
+          echo "Hook script:"
+          cat armbian-build/userpatches/customize-image.sh
+
+      - name: Build Armbian image
+        run: |
+          cd armbian-build
+
+          echo "=== Starting Armbian build ==="
+          echo "Board: rk3566-evb1-ddr4-v10"
+          echo "Branch: vendor (Rockchip BSP 6.1 kernel)"
+          echo "Release: ${{ github.event.inputs.release || 'bookworm' }}"
+          echo "Build type: ${{ github.event.inputs.build_type || 'minimal' }}"
+
+          # Determine BUILD_MINIMAL flag
+          if [ "${{ github.event.inputs.build_type || 'minimal' }}" = "minimal" ]; then
+            MINIMAL_FLAG="BUILD_MINIMAL=yes"
+          else
+            MINIMAL_FLAG="BUILD_MINIMAL=no"
+          fi
+
+          ./compile.sh \
+            BOARD=rk3566-evb1-ddr4-v10 \
+            BRANCH=vendor \
+            BUILD_DESKTOP=no \
+            ${MINIMAL_FLAG} \
+            KERNEL_CONFIGURE=no \
+            RELEASE=${{ github.event.inputs.release || 'bookworm' }}
+        env:
+          SKIP_EXTERNAL_WARNING: "yes"
+
+      - name: List output artifacts
+        run: |
+          echo "=== Build output ==="
+          find armbian-build/output -type f \( -name "*.img" -o -name "*.img.xz" -o -name "*.img.gz" \) 2>/dev/null || echo "No image files found"
+          echo "---"
+          ls -lah armbian-build/output/images/ 2>/dev/null || echo "No images directory"
+          echo "---"
+          ls -lah armbian-build/output/debs/ 2>/dev/null || echo "No debs directory"
+
+      - name: Upload Armbian image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: armbian-rk3566-evb1-ddr4-v10
+          path: |
+            armbian-build/output/images/*.img
+            armbian-build/output/images/*.img.xz
+            armbian-build/output/images/*.img.gz
+            armbian-build/output/images/*.img.txt
+          retention-days: 7

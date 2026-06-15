@@ -7,6 +7,12 @@ on:
       - '.github/workflows/build-dtb.yml'
   pull_request:
   workflow_dispatch:
+    inputs:
+      kernel_branch:
+        description: 'Rockchip BSP kernel branch'
+        required: false
+        type: string
+        default: 'develop-6.1'
 
 jobs:
   build-dtb:
