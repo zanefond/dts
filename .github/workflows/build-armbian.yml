@@ -143,82 +143,52 @@ jobs:
 
           echo "disable-optee.patch placed in userpatches/u-boot/ locations."
 
-          # Also create a customize-uboot.sh hook as a fallback (runs after U-Boot source is prepared)
+          # Also create a customize-uboot.sh hook (runs after U-Boot source is prepared)
           cat > armbian-build/userpatches/customize-uboot.sh << 'HOOKEOF'
           #!/bin/bash
-          #
-          # Armbian customize-uboot.sh hook
-          # Disables OPTEE in U-Boot defconfig AND patches the C source to skip
-          # the "optee api revision is too low" check in Rockchip BSP U-Boot 2017.09
-          #
-
-          echo "--- Disabling OPTEE in U-Boot ---"
+          set -x
+          echo "=== customize-uboot.sh: PWD=$(pwd) ==="
+          echo "=== File listing of arch/arm/mach-rockchip/ ==="
+          ls -la arch/arm/mach-rockchip/ 2>/dev/null || echo "(dir not found)"
+          echo "=== File listing of board/rockchip/ ==="
+          ls -la board/rockchip/ 2>/dev/null || echo "(dir not found)"
 
           # === Step 1: Disable OPTEE in Kconfig/defconfig ===
-          if [ -f "configs/rk3568_defconfig" ]; then
-            sed -i '/CONFIG_OPTEE/d' configs/rk3568_defconfig
-            echo "# CONFIG_OPTEE is not set" >> configs/rk3568_defconfig
-            echo "# CONFIG_OPTEE_CLIENT is not set" >> configs/rk3568_defconfig
-            echo "# CONFIG_OPTEE_TA_AVB is not set" >> configs/rk3568_defconfig
-            echo "OPTEE disabled in configs/rk3568_defconfig"
-          else
-            echo "WARNING: configs/rk3568_defconfig not found, searching..."
-            DEFCONFIG=$(find . -name "rk3568_defconfig" -path "*/configs/*" 2>/dev/null | head -1)
-            if [ -n "${DEFCONFIG}" ]; then
-              sed -i '/CONFIG_OPTEE/d' "${DEFCONFIG}"
-              echo "# CONFIG_OPTEE is not set" >> "${DEFCONFIG}"
-              echo "# CONFIG_OPTEE_CLIENT is not set" >> "${DEFCONFIG}"
-              echo "# CONFIG_OPTEE_TA_AVB is not set" >> "${DEFCONFIG}"
-              echo "OPTEE disabled in ${DEFCONFIG}"
-            fi
-          fi
-
-          if [ -f ".config" ]; then
-            sed -i 's/^CONFIG_OPTEE=y$/# CONFIG_OPTEE is not set/' .config
-            sed -i 's/^CONFIG_OPTEE_CLIENT=y$/# CONFIG_OPTEE_CLIENT is not set/' .config
-            sed -i 's/^CONFIG_OPTEE_TA_AVB=y$/# CONFIG_OPTEE_TA_AVB is not set/' .config
-          fi
-
-          # === Step 2: Patch the OP-TEE check in Rockchip mach code ===
-          # The "optee api revision is too low" error comes from Rockchip's
-          # custom OP-TEE client code in arch/arm/mach-rockchip/
-          echo "--- Patching OP-TEE source code ---"
-
-          # Find and patch the OP-TEE API revision check function
-          # Common locations in Rockchip BSP U-Boot 2017.09
-          for TARGET in \
-            arch/arm/mach-rockchip/optee.c \
-            arch/arm/mach-rockchip/rockchip-optee.c \
-            arch/arm/mach-rockchip/rk_optee.c \
-            common/optee.c \
-            lib/optee/optee.c; do
-            if [ -f "${TARGET}" ]; then
-              echo "Found OPTEE source: ${TARGET}"
-              # Replace the error-and-halt with a warning-and-continue
-              sed -i 's/optee api revision is too low/optee api revision skipped (patched)/g' "${TARGET}"
-              sed -i 's/### ERROR ### Please RESET the board ###/### NOTICE ### OPTEE disabled, continuing boot ###/g' "${TARGET}"
-              # Find check_api_revision function and make it return 0
-              sed -i 's/return -1;.*\/\*.*optee.*check.*fail/return 0; \/* patched to skip optee check *\//g' "${TARGET}"
-              echo "Patched ${TARGET}"
+          echo "--- Step 1: Disable OPTEE in Kconfig ---"
+          for dc in configs/rk3568_defconfig $(find . -name "rk3568_defconfig" -path "*/configs/*" 2>/dev/null); do
+            if [ -f "${dc}" ]; then
+              sed -i '/CONFIG_OPTEE/d' "${dc}"
+              echo "# CONFIG_OPTEE is not set" >> "${dc}"
+              echo "# CONFIG_OPTEE_CLIENT is not set" >> "${dc}"
+              echo "# CONFIG_OPTEE_TA_AVB is not set" >> "${dc}"
+              echo "OPTEE disabled in ${dc}"
             fi
           done
+          [ -f ".config" ] && sed -i '/CONFIG_OPTEE/d' .config
 
-          # Fallback: search all C files for the error string and patch
-          grep -rl "optee api revision is too low" --include="*.c" . 2>/dev/null | while read f; do
-            echo "Patching OP-TEE error in: ${f}"
-            sed -i 's/optee check api revision fail:.*/optee check skipped (patched by customize-uboot.sh)/g' "${f}"
-            sed -i 's/optee api revision is too low/optee skipped - continuing boot/g' "${f}"
-            sed -i 's/### ERROR ### Please RESET the board ###/### NOTICE ### Booting without OPTEE ###/g' "${f}"
+          # === Step 2: Search ALL files for the OP-TEE error strings ===
+          echo "--- Step 2: Searching for OP-TEE error strings ---"
+          echo "=== Searching for 'optee api revision' ==="
+          grep -rn "optee api revision" --include="*" . 2>/dev/null || echo "(not found in any file)"
+          echo "=== Searching for 'Please RESET' ==="
+          grep -rn "Please RESET" --include="*" . 2>/dev/null || echo "(not found in any file)"
+          echo "=== Searching for 'check api revision' ==="
+          grep -rn "check api revision" --include="*" . 2>/dev/null || echo "(not found in any file)"
+
+          # === Step 3: Aggressive C source patching ===
+          echo "--- Step 3: Aggressive source patching ---"
+          # Patch every C file that mentions optee
+          grep -rli "optee" --include="*.c" --include="*.h" . 2>/dev/null | while read f; do
+            echo "Patching: ${f}"
+            # Replace error strings
+            sed -i 's/optee api revision is too low/optee skipped - continue boot/g' "${f}"
+            sed -i 's/optee check api revision fail.*/optee check skipped/g' "${f}"
+            sed -i 's/### ERROR ### Please RESET the board ###/### NOTICE ### booting without OPTEE ###/g' "${f}"
+            # Replace the optee check return -1 pattern
+            sed -i 's/return\s\+-1\s*;\s*\/\*.*optee.*\*\//return 0; \/* patched *\//gI' "${f}"
           done
 
-          # Also patch rockchip specific board init that calls optee
-          grep -rl "optee" --include="*.c" arch/arm/mach-rockchip/ 2>/dev/null | while read f; do
-            echo "Checking for OP-TEE calls in: ${f}"
-            # Replace optee init failures with warnings
-            sed -i 's/printf("optee.*fail/printf("optee init skipped (patched)/g' "${f}"
-          done
-
-          echo "--- U-Boot OPTEE disable complete ---"
+          echo "--- customize-uboot.sh complete ---"
           HOOKEOF
           chmod +x armbian-build/userpatches/customize-uboot.sh
           echo "customize-uboot.sh created."
