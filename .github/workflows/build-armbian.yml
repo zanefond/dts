@@ -232,7 +232,7 @@ jobs:
           KERNEL_TARGET="vendor"
           FULL_DESKTOP="no"
           BOOT_LOGO="no"
-          BOOT_SCENARIO="spl-blobs"
+          BOOT_SCENARIO="tpl-spl"
           BOOT_FDT_FILE="rockchip/rk3566-evb1-ddr4-v10.dtb"
           IMAGE_PARTITION_TABLE="gpt"
           CSCEOF
