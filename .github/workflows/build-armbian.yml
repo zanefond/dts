@@ -148,10 +148,6 @@ jobs:
           #!/bin/bash
           set -x
           echo "=== customize-uboot.sh: PWD=$(pwd) ==="
-          echo "=== File listing of arch/arm/mach-rockchip/ ==="
-          ls -la arch/arm/mach-rockchip/ 2>/dev/null || echo "(dir not found)"
-          echo "=== File listing of board/rockchip/ ==="
-          ls -la board/rockchip/ 2>/dev/null || echo "(dir not found)"
 
           # === Step 1: Disable OPTEE in Kconfig/defconfig ===
           echo "--- Step 1: Disable OPTEE in Kconfig ---"
@@ -166,26 +162,48 @@ jobs:
           done
           [ -f ".config" ] && sed -i '/CONFIG_OPTEE/d' .config
 
-          # === Step 2: Search ALL files for the OP-TEE error strings ===
-          echo "--- Step 2: Searching for OP-TEE error strings ---"
-          echo "=== Searching for 'optee api revision' ==="
-          grep -rn "optee api revision" --include="*" . 2>/dev/null || echo "(not found in any file)"
-          echo "=== Searching for 'Please RESET' ==="
-          grep -rn "Please RESET" --include="*" . 2>/dev/null || echo "(not found in any file)"
-          echo "=== Searching for 'check api revision' ==="
-          grep -rn "check api revision" --include="*" . 2>/dev/null || echo "(not found in any file)"
+          # === Step 2: Patch make_fit_atf.sh to NOT include tee.bin ===
+          echo "--- Step 2: Patch make_fit_atf.sh ---"
+          FIT_SCRIPT="arch/arm/mach-rockchip/make_fit_atf.sh"
+          if [ -f "${FIT_SCRIPT}" ]; then
+            echo "Found ${FIT_SCRIPT}, patching..."
+            # Remove any tee.bin references
+            sed -i 's/TEE_BIN=.*/TEE_BIN=""/g' "${FIT_SCRIPT}"
+            sed -i 's/tee.bin//g' "${FIT_SCRIPT}"
+            sed -i '/tee/,/}/d' "${FIT_SCRIPT}"
+            echo "=== Patched make_fit_atf.sh ==="
+            cat "${FIT_SCRIPT}"
+          fi
 
-          # === Step 3: Aggressive C source patching ===
-          echo "--- Step 3: Aggressive source patching ---"
-          # Patch every C file that mentions optee
+          # === Step 3: After u-boot.its is generated, strip OP-TEE node ===
+          # This hook runs before make, so we need to patch the generated .its later.
+          # Instead, create a wrapper around the make_fit_atf.sh call.
+          if [ -f "${FIT_SCRIPT}" ]; then
+            # Backup original
+            cp "${FIT_SCRIPT}" "${FIT_SCRIPT}.orig"
+            # Replace with a wrapper that strips tee from the output
+            cat > "${FIT_SCRIPT}" << 'FITEOF'
+          #!/bin/bash
+          # Wrapper: call original make_fit_atf.sh then strip tee node from u-boot.its
+          SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+          ORIG_SCRIPT="${SCRIPT_DIR}/make_fit_atf.sh.orig"
+          if [ -x "${ORIG_SCRIPT}" ]; then
+            "${ORIG_SCRIPT}" "$@" | sed '/tee {/,/};/d'
+          else
+            cat /dev/null
+          fi
+          FITEOF
+            chmod +x "${FIT_SCRIPT}"
+            echo "Replaced ${FIT_SCRIPT} with wrapper"
+          fi
+
+          # === Step 4: Patch C source files mentioning optee ===
+          echo "--- Step 4: Patch C sources ---"
           grep -rli "optee" --include="*.c" --include="*.h" . 2>/dev/null | while read f; do
             echo "Patching: ${f}"
-            # Replace error strings
             sed -i 's/optee api revision is too low/optee skipped - continue boot/g' "${f}"
             sed -i 's/optee check api revision fail.*/optee check skipped/g' "${f}"
             sed -i 's/### ERROR ### Please RESET the board ###/### NOTICE ### booting without OPTEE ###/g' "${f}"
-            # Replace the optee check return -1 pattern
-            sed -i 's/return\s\+-1\s*;\s*\/\*.*optee.*\*\//return 0; \/* patched *\//gI' "${f}"
           done
 
           echo "--- customize-uboot.sh complete ---"
