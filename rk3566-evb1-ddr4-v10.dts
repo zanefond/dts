@@ -1674,3 +1674,10 @@
 		};
 	};
 };
+/*
+ * Explicitly delete DSI nodes to prevent U-Boot from forcefully
+ * enabling them via FDT fixups and causing DRM EPROBE_DEFER (-517) loops.
+ * The board uses an eDP-to-LVDS converter, so DSI is physically unused.
+ */
+/delete-node/ &dsi0;
+/delete-node/ &dsi1;
