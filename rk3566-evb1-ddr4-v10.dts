@@ -1101,6 +1101,14 @@
 	};
 };
 
+&dsi0 {
+	status = "disabled";
+};
+
+&dsi1 {
+	status = "disabled";
+};
+
 &edp_phy {
 	status = "okay";
 };
