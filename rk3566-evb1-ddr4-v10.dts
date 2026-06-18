@@ -492,7 +492,7 @@
 
 &pcie2x1 {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pcie20m1_pins>;
+	pinctrl-0 = <&evb_pcie20m1_pins>;
 	reset-gpios = <&gpio4 RK_PD1 GPIO_ACTIVE_HIGH>;
 	vpcie3v3-supply = <&vcc3v3_pcie>;
 	status = "okay";
@@ -1614,7 +1614,7 @@
 			rockchip,pins = <0 RK_PC7 0 &pcfg_pull_none>;
 		};
 
-		pcie20m1_pins: pcie20m1-pins {
+		evb_pcie20m1_pins: pcie20m1-pins {
 			rockchip,pins = <4 RK_PD1 0 &pcfg_pull_none>;
 		};
 	};
