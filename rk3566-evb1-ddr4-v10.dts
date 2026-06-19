@@ -114,6 +114,8 @@
 	vcc3v3_pcie: vcc3v3-pcie-regulator {
 		compatible = "regulator-fixed";
 		regulator-name = "vcc3v3_pcie";
+		regulator-always-on;
+		regulator-boot-on;
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 		enable-active-high;
@@ -432,7 +434,7 @@
 };
 
 &sfc {
-	status = "okay";
+	status = "disabled";
 };
 
 &sdhci {
@@ -466,6 +468,7 @@
 	cap-sd-highspeed;
 	cap-sdio-irq;
 	keep-power-in-suspend;
+	vmmc-supply = <&vcc_3v3>;
 	mmc-pwrseq = <&sdio_pwrseq>;
 	non-removable;
 	pinctrl-names = "default";
@@ -493,8 +496,9 @@
 &pcie2x1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pcie20m1_pins>;
-	reset-gpios = <&gpio4 RK_PD1 GPIO_ACTIVE_HIGH>;
+	reset-gpios = <&gpio4 RK_PD1 GPIO_ACTIVE_LOW>;
 	vpcie3v3-supply = <&vcc3v3_pcie>;
+	num-lanes = <1>;
 	status = "okay";
 };
 
