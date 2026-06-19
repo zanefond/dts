@@ -204,15 +204,15 @@
 			253 254 255>;
 		default-brightness-level = <200>;
 		enable-gpios = <&gpio0 RK_PC7 GPIO_ACTIVE_HIGH>;
-		pinctrl-names = "active";
+		pinctrl-names = "default";
 		pinctrl-0 = <&edp_backlight_on>;
 	};
 
 	panel_edp: panel_edp {
-		compatible = "panel-simple";
+		compatible = "simple-panel";
 		backlight = <&backlight>;
 		enable-gpios = <&gpio0 RK_PC4 GPIO_ACTIVE_HIGH>;
-		pinctrl-names = "active";
+		pinctrl-names = "default";
 		pinctrl-0 = <&edp_vdd_en_gpio>;
 		enable-delay-ms = <220>;
 		prepare-delay-ms = <220>;
@@ -242,7 +242,7 @@
 		compatible = "mmc-pwrseq-simple";
 		clocks = <&rk809 1>;
 		clock-names = "ext_clock";
-		pinctrl-names = "active";
+		pinctrl-names = "default";
 		pinctrl-0 = <&wifi_enable_h>;
 		post-power-on-delay-ms = <200>;
 		reset-gpios = <&gpio2 RK_PB1 GPIO_ACTIVE_LOW>;
@@ -461,7 +461,7 @@
 	sd-uhs-sdr104;
 	vmmc-supply = <&vcc3v3_sd>;
 	vqmmc-supply = <&vccio_sd>;
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&sdmmc0_bus4 &sdmmc0_clk &sdmmc0_cmd &sdmmc0_det>;
 	status = "okay";
 };
@@ -478,7 +478,7 @@
 	vqmmc-supply = <&vcc_3v3>;
 	mmc-pwrseq = <&sdio_pwrseq>;
 	non-removable;
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&sdmmc1_bus4 &sdmmc1_cmd &sdmmc1_clk>;
 	status = "okay";
 	#address-cells = <1>;
@@ -489,7 +489,7 @@
 		reg = <1>;
 		interrupt-parent = <&gpio2>;
 		interrupts = <RK_PB2 IRQ_TYPE_LEVEL_LOW>;
-		pinctrl-names = "active";
+		pinctrl-names = "default";
 		pinctrl-0 = <&wifi_host_wake_irq>;
 		wakeup-source;
 		keep-power-in-suspend;
@@ -502,7 +502,7 @@
 
 &pcie2x1 {
 	num-lanes = <1>;
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&pcie20m1_pins>;
 	reset-gpios = <&gpio3 RK_PC1 GPIO_ACTIVE_HIGH>;
 	vpcie3v3-supply = <&vcc3v3_pcie>;
@@ -582,7 +582,7 @@
 &i2c0 {
 	status = "okay";
 	i2c-scl-frequency = <400000>;
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&i2c0_xfer>;
 
 	vdd_cpu: tcs4525@1c {
@@ -869,7 +869,7 @@
 			assigned-clocks = <&cru I2S1_MCLKOUT>, <&cru I2S1_MCLKOUT_TX>;
 			assigned-clock-rates = <12288000>;
 			assigned-clock-parents = <&cru I2S1_MCLKOUT>, <&cru I2S1_MCLKOUT>;
-			pinctrl-names = "active";
+			pinctrl-names = "default";
 			pinctrl-0 = <&i2s1m0_mclk>;
 			hp-volume = <30>;
 			spk-volume = <35>;
@@ -889,7 +889,7 @@
 		status = "disabled";
 		compatible = "goodix,gt1x";
 		reg = <0x14>;
-		pinctrl-names = "active";
+		pinctrl-names = "default";
 		pinctrl-0 = <&touch_gpio>;
 		goodix,rst-gpio = <&gpio0 RK_PB6 GPIO_ACTIVE_HIGH>;
 		goodix,irq-gpio = <&gpio0 RK_PB5 IRQ_TYPE_EDGE_FALLING>;
@@ -912,10 +912,6 @@
 	hym8563: hym8563@51 {
 		compatible = "haoyu,hym8563";
 		reg = <0x51>;
-		pinctrl-names = "active";
-		pinctrl-0 = <&rtc_int>;
-		interrupt-parent = <&gpio0>;
-		interrupts = <RK_PC0 IRQ_TYPE_LEVEL_LOW>;
 	};
 
 };
@@ -925,37 +921,37 @@
 };
 
 &i2s1_8ch {
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&i2s1m0_sclktx &i2s1m0_lrcktx &i2s1m0_sdi0 &i2s1m0_sdo0>;
 	status = "okay";
 };
 
 &i2s2_2ch {
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&i2s2m0_sclktx &i2s2m0_lrcktx &i2s2m0_sdi &i2s2m0_sdo>;
 	status = "okay";
 };
 
 &i2s3_2ch {
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&i2s3m0_sclk &i2s3m0_lrck &i2s3m0_sdi &i2s3m0_sdo>;
 	status = "disabled";
 };
 
 &spdif_8ch {
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&spdifm0_tx>;
 	status = "okay";
 };
 
 &uart0 {
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&uart0_xfer>;
 	status = "disabled";
 };
 
 &uart1 {
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&uart1m0_xfer &uart1m0_ctsn>;
 	status = "okay";
 	uart-has-rtscts;
@@ -967,7 +963,7 @@
 		device-wake-gpios = <&gpio2 RK_PB4 GPIO_ACTIVE_HIGH>;
 		host-wake-gpios = <&gpio2 RK_PB5 GPIO_ACTIVE_HIGH>;
 		enable-gpios = <&gpio2 RK_PB1 GPIO_ACTIVE_HIGH>;
-		pinctrl-names = "active";
+		pinctrl-names = "default";
 		pinctrl-0 = <&uart1_gpios>;
 		vbat-supply = <&vcc_wifi>;
 		vddio-supply = <&vccio_sd>;
@@ -975,49 +971,49 @@
 };
 
 &uart2 {
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&uart2m0_xfer>;
 	status = "disabled";
 };
 
 &uart3 {
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&uart3m1_xfer>;
 	status = "okay";
 };
 
 &uart4 {
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&uart4m1_xfer>;
 	status = "okay";
 };
 
 &uart5 {
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&uart5m0_xfer>;
 	status = "disabled";
 };
 
 &uart6 {
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&uart6m0_xfer>;
 	status = "disabled";
 };
 
 &uart7 {
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&uart7m0_xfer>;
 	status = "disabled";
 };
 
 &uart8 {
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&uart8m0_xfer>;
 	status = "disabled";
 };
 
 &uart9 {
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&uart9m0_xfer>;
 	status = "disabled";
 };
@@ -1025,7 +1021,7 @@
 &can0 {
 	assigned-clocks = <&cru CLK_CAN0>;
 	assigned-clock-rates = <150000000>;
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&can0m1_pins>;
 	status = "disabled";
 };
@@ -1033,7 +1029,7 @@
 &can1 {
 	assigned-clocks = <&cru CLK_CAN1>;
 	assigned-clock-rates = <150000000>;
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&can1m1_pins>;
 	status = "disabled";
 };
@@ -1041,7 +1037,7 @@
 &can2 {
 	assigned-clocks = <&cru CLK_CAN2>;
 	assigned-clock-rates = <150000000>;
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&can2m1_pins>;
 	status = "disabled";
 };
@@ -1165,7 +1161,7 @@
 };
 
 &pwm15 {
-	pinctrl-names = "default";
+	pinctrl-names = "active";
 	pinctrl-0 = <&pwm15m1_pins>;
 	status = "okay";
 };
@@ -1200,8 +1196,9 @@
 &hdmi {
 	avdd-0v9-supply = <&vdda0v9_image>;
 	avdd-1v8-supply = <&vcca1v8_image>;
-	pinctrl-names = "active";
+	pinctrl-names = "default";
 	pinctrl-0 = <&hdmitx_scl &hdmitx_sda &hdmitxm0_cec>;
+	#sound-dai-cells = <0>;
 	status = "okay";
 
 	ports {
