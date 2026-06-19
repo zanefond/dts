@@ -30,17 +30,6 @@
 	model = "Rockchip RK3566 EVB1 DDR4 V10 Board";
 	compatible = "rockchip,rk3566-evb1-ddr4-v10", "rockchip,rk3566";
 
-	hdmi-con {
-		compatible = "hdmi-connector";
-		type = "a";
-
-		port {
-			hdmi_con_in: endpoint {
-				remote-endpoint = <&hdmi_out_con>;
-			};
-		};
-	};
-
 	aliases {
 		ethernet1 = &gmac1;
 		mmc0 = &sdmmc0;   /* SD card */
@@ -209,7 +198,7 @@
 	};
 
 	panel_edp: panel_edp {
-		compatible = "simple-panel";
+		compatible = "edp-panel";
 		backlight = <&backlight>;
 		enable-gpios = <&gpio0 RK_PC4 GPIO_ACTIVE_HIGH>;
 		pinctrl-names = "default";
@@ -1198,16 +1187,6 @@
 	pinctrl-0 = <&hdmitx_scl &hdmitx_sda &hdmitxm0_cec>;
 	#sound-dai-cells = <0>;
 	status = "okay";
-
-	ports {
-		hdmi_out: port@1 {
-			reg = <1>;
-
-			hdmi_out_con: endpoint {
-				remote-endpoint = <&hdmi_con_in>;
-			};
-		};
-	};
 };
 
 &hdmi_in_vp0 {
@@ -1215,7 +1194,7 @@
 };
 
 &edp {
-	status = "disabled";
+	status = "okay";
 
 	ports {
 		port@1 {
@@ -1237,7 +1216,7 @@
 };
 
 &edp_phy {
-	status = "disabled";
+	status = "okay";
 };
 
 &pmu_io_domains {
