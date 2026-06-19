@@ -197,27 +197,6 @@
 		pinctrl-0 = <&edp_backlight_on>;
 	};
 
-	panel_edp: panel_edp {
-		compatible = "edp-panel";
-		backlight = <&backlight>;
-		enable-gpios = <&gpio0 RK_PC4 GPIO_ACTIVE_HIGH>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&edp_vdd_en_gpio>;
-		enable-delay-ms = <220>;
-		prepare-delay-ms = <220>;
-		reset-delay-ms = <220>;
-		init-delay-ms = <220>;
-		bpc = <8>;
-		width-mm = <344>;
-		height-mm = <193>;
-
-		port {
-			panel_in_edp: endpoint {
-				remote-endpoint = <&edp_out>;
-			};
-		};
-	};
-
 		leds: leds {
 			compatible = "gpio-leds";
 
@@ -242,7 +221,7 @@
 		simple-audio-card,format = "i2s";
 		simple-audio-card,mclk-fs = <128>;
 		simple-audio-card,name = "rockchip,hdmi";
-		status = "okay";
+		status = "disabled";
 
 		simple-audio-card,cpu {
 			sound-dai = <&i2s0_8ch>;
@@ -904,6 +883,7 @@
 };
 
 &i2s0_8ch {
+	#sound-dai-cells = <0>;
 	status = "okay";
 };
 
@@ -1180,13 +1160,22 @@
 	status = "okay";
 };
 
+&display_subsystem {
+	status = "okay";
+};
+
 &hdmi {
 	avdd-0v9-supply = <&vdda0v9_image>;
 	avdd-1v8-supply = <&vcca1v8_image>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&hdmitx_scl &hdmitx_sda &hdmitxm0_cec>;
+	rockchip,phy-table = <0x58834d4 0x8009 0x00 0x270 0x9d5b340 0x800b 0x00 0x209 0xb1069a8 0x800b 0x00 0x1ed 0x11b3dc40 0x800b 0x00 0x1ad 0x2367b880 0x8029 0x00 0x88 0x00 0x00 0x00 0x00>;
 	#sound-dai-cells = <0>;
 	status = "okay";
+};
+
+&route_edp {
+	status = "disabled";
 };
 
 &hdmi_in_vp0 {
@@ -1195,16 +1184,6 @@
 
 &edp {
 	status = "okay";
-
-	ports {
-		port@1 {
-			reg = <1>;
-
-			edp_out: endpoint {
-				remote-endpoint = <&panel_in_edp>;
-			};
-		};
-	};
 };
 
 &dsi0 {
