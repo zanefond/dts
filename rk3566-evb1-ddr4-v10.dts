@@ -440,10 +440,8 @@
 	bus-width = <4>;
 	disable-wp;
 	cap-sd-highspeed;
-	sd-uhs-sdr104;
+	cap-sdio-irq;
 	keep-power-in-suspend;
-	vmmc-supply = <&vcc_wifi>;
-	vqmmc-supply = <&vcc_3v3>;
 	mmc-pwrseq = <&sdio_pwrseq>;
 	non-removable;
 	pinctrl-names = "default";
@@ -1162,6 +1160,7 @@
 
 &display_subsystem {
 	status = "okay";
+	memory-region = <&drm_logo>, <&drm_cubic_lut>;
 };
 
 &hdmi {
@@ -1297,7 +1296,15 @@
 		};
 
 		hdmitx_scl: hdmitx-scl {
-			rockchip,pins = <4 RK_PD1 1 &pcfg_pull_none>;
+			rockchip,pins = <4 RK_PD1 1 &pcfg_pull_up>;
+		};
+
+		hdmitx_sda: hdmitx-sda {
+			rockchip,pins = <4 RK_PD2 1 &pcfg_pull_up>;
+		};
+
+		hdmitxm0_cec: hdmitxm0-cec {
+			rockchip,pins = <4 RK_PD3 1 &pcfg_pull_none>;
 		};
 
 		hdmitx_sda: hdmitx-sda {
