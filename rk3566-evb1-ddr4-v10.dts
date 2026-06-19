@@ -506,8 +506,6 @@
 	pinctrl-0 = <&pcie20m1_pins>;
 	reset-gpios = <&gpio3 RK_PC1 GPIO_ACTIVE_HIGH>;
 	vpcie3v3-supply = <&vcc3v3_pcie>;
-	aspm-no-l0s;
-	aspm-no-l1;
 	status = "okay";
 };
 
@@ -1217,7 +1215,7 @@
 };
 
 &edp {
-	status = "okay";
+	status = "disabled";
 
 	ports {
 		port@1 {
@@ -1239,7 +1237,7 @@
 };
 
 &edp_phy {
-	status = "okay";
+	status = "disabled";
 };
 
 &pmu_io_domains {
