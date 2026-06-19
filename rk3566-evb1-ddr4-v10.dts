@@ -440,7 +440,6 @@
 	bus-width = <4>;
 	disable-wp;
 	cap-sd-highspeed;
-	cap-sdio-irq;
 	keep-power-in-suspend;
 	vmmc-supply = <&vcc_wifi>;
 	vqmmc-supply = <&vcc_3v3>;
@@ -1162,6 +1161,7 @@
 
 &display_subsystem {
 	status = "okay";
+	memory-region = <>;
 };
 
 &hdmi {
