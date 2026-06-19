@@ -1229,10 +1229,6 @@
 	};
 };
 
-&hdptxphy_hdmi {
-	status = "okay";
-};
-
 &edp {
 	status = "okay";
 
