@@ -436,11 +436,11 @@
 };
 
 &sdmmc1 {
-	max-frequency = <50000000>;
+	max-frequency = <25000000>;
+	rockchip,default-sample-phase = <90>;
 	supports-sdio;
 	bus-width = <4>;
 	disable-wp;
-	cap-sd-highspeed;
 	cap-sdio-irq;
 	keep-power-in-suspend;
 	mmc-pwrseq = <&sdio_pwrseq>;
