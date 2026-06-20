@@ -1313,15 +1313,6 @@
 		};
 	};
 
-		hdmitxm0_cec: hdmitxm0-cec {
-			rockchip,pins = <4 RK_PD3 1 &pcfg_pull_none>;
-		};
-
-		hdmitx_sda: hdmitx-sda {
-			rockchip,pins = <4 RK_PD2 1 &pcfg_pull_none>;
-		};
-	};
-
 	i2c1 {
 		/omit-if-no-ref/
 		i2c1_xfer: i2c1-xfer {
