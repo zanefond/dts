@@ -154,7 +154,7 @@
 		regulator-max-microvolt = <3300000>;
 		regulator-always-on;
 		regulator-boot-on;
-		startup-delay-us = <50000>;
+		startup-delay-us = <200000>;
 	};
 
 	vcc_camera: vcc-camera-regulator {
