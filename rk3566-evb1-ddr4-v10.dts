@@ -1172,7 +1172,7 @@
 	avdd-1v8-supply = <&vcca1v8_image>;
 	interrupts = <0 45 4>, <0 114 4>;
 	pinctrl-names = "default";
-	pinctrl-0 = <&hdmitx_scl &hdmitx_sda &hdmitxm0_cec>;
+	pinctrl-0 = <&hdmitx_scl &hdmitx_sda &hdmitxm0_cec &hdmitx_hpd>;
 	rockchip,phy-table = <0x58834d4 0x8009 0x00 0x270 0x9d5b340 0x800b 0x00 0x209 0xb1069a8 0x800b 0x00 0x1ed 0x11b3dc40 0x800b 0x00 0x1ad 0x2367b880 0x8029 0x00 0x88 0x00 0x00 0x00 0x00>;
 	#sound-dai-cells = <0>;
 	status = "okay";
@@ -1307,6 +1307,11 @@
 		hdmitx_sda: hdmitx-sda {
 			rockchip,pins = <4 RK_PD2 1 &pcfg_pull_up>;
 		};
+
+		hdmitx_hpd: hdmitx-hpd {
+			rockchip,pins = <4 RK_PC6 1 &pcfg_pull_down>;
+		};
+	};
 
 		hdmitxm0_cec: hdmitxm0-cec {
 			rockchip,pins = <4 RK_PD3 1 &pcfg_pull_none>;
