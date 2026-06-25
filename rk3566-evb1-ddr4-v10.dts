@@ -119,6 +119,10 @@
 		enable-active-high;
 		startup-delay-us = <100000>;
 		vin-supply = <&vcc5v0_sys>;
+		
+		/* 加上下面这两行，强制给网卡通电！ */
+		regulator-always-on;
+		regulator-boot-on;
 	};
 
 	vcc3v3_lcd0_n: vcc3v3-lcd0-n {
@@ -298,17 +302,6 @@
 			label = "light up";
 			linux,code = <KEY_BRIGHTNESSUP>;
 			press-threshold-microvolt = <1300000>;
-		};
-	};
-
-	hdmi-con {
-		compatible = "hdmi-connector";
-		type = "a";
-
-		port {
-			hdmi_con_in: endpoint {
-				remote-endpoint = <&hdmi_out_con>;
-			};
 		};
 	};
 };
@@ -1160,37 +1153,41 @@
 	status = "okay";
 };
 
+&vp0_out_hdmi {
+	status = "okay";
+};
+
 &vop_mmu {
 	status = "okay";
+};
+
+&route_hdmi {
+	logo,uboot = "logo.bmp";
+	logo,kernel = "logo_kernel.bmp";
+	logo,mode = "center";
+	charge_logo,mode = "center";
+	status = "okay";
+};
+
+&display_subsystem {
+	status = "okay";
+	memory-region = <&drm_logo>, <&drm_cubic_lut>;
 };
 
 &hdmi {
 	avdd-0v9-supply = <&vdda0v9_image>;
 	avdd-1v8-supply = <&vcca1v8_image>;
-	pinctrl-names = "default";
-	/* 关联你已经写好的引脚，确保 I2C 通信正常，否则读不到显示器分辨率 */
-	pinctrl-0 = <&hdmitx_scl &hdmitx_sda &hdmitxm0_cec>;
-	status = "okay";
-
-	ports {
-		port@1 {
-			reg = <1>;
-			hdmi_out_con: endpoint {
-				remote-endpoint = <&hdmi_con_in>;
-			};
-		};
-	};
-};
-
-&hdmi_in_vp1 {
-	status = "okay";
-};
-
-&vp1_out_hdmi {
+	#sound-dai-cells = <0>;
 	status = "okay";
 };
 
 &route_edp {
+	status = "disabled";
+};
+
+&hdmi_in_vp0 {
+	status = "okay";
+};
 	status = "disabled";
 };
 
