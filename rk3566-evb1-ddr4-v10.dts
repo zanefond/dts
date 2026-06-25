@@ -1158,23 +1158,6 @@
 	assigned-clocks = <&cru DCLK_VOP0>, <&cru DCLK_VOP1>;
 	assigned-clock-parents = <&pmucru PLL_HPLL>, <&cru PLL_VPLL>;
 	status = "okay";
-
-	ports {
-		#address-cells = <1>;
-		#size-cells = <0>;
-
-		vp0: port@0 {
-			reg = <0>;
-			/* VP0 通常留给 eDP 或 DSI，这里暂不连接 */
-		};
-
-		vp1: port@1 {
-			reg = <1>;
-			vp1_out_hdmi: endpoint {
-				remote-endpoint = <&hdmi_in_vp1>;
-			};
-		};
-	};
 };
 
 &vop_mmu {
@@ -1190,18 +1173,6 @@
 	status = "okay";
 
 	ports {
-		#address-cells = <1>;
-		#size-cells = <0>;
-
-		/* HDMI 输入：连接到 VOP 的 VP1 */
-		port@0 {
-			reg = <0>;
-			hdmi_in_vp1: endpoint {
-				remote-endpoint = <&vp1_out_hdmi>;
-			};
-		};
-
-		/* HDMI 输出：连接到主板物理接口 */
 		port@1 {
 			reg = <1>;
 			hdmi_out_con: endpoint {
@@ -1209,6 +1180,14 @@
 			};
 		};
 	};
+};
+
+&hdmi_in_vp1 {
+	status = "okay";
+};
+
+&vp1_out_hdmi {
+	status = "okay";
 };
 
 &route_edp {
