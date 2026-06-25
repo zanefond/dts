@@ -1188,8 +1188,6 @@
 &hdmi_in_vp0 {
 	status = "okay";
 };
-	status = "disabled";
-};
 
 &edp {
 	status = "disabled";
