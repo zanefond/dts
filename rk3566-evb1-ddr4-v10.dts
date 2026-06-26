@@ -117,7 +117,7 @@
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 		enable-active-high;
-		startup-delay-us = <100000>;
+		startup-delay-us = <5000>;
 		vin-supply = <&vcc5v0_sys>;
 		
 		/* 加上下面这两行，强制给网卡通电！ */
@@ -483,6 +483,8 @@
 };
 
 &combphy2_psq {
+	assigned-clocks = <&pmucru 37>;
+	assigned-clock-rates = <100000000>;
 	status = "okay";
 };
 
