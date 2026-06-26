@@ -476,24 +476,17 @@
 
 &pcie2x1 {
 	num-lanes = <1>;
-	max-link-speed = <2>;
+	max-link-speed = <1>;
 	phys = <&combphy2_psq 2>;
 	phy-names = "pcie-phy";
 	pinctrl-names = "default";
 	pinctrl-0 = <&pcie_reset_pin>;
-	/delete-property/ reset-gpios;
+	reset-gpios = <&gpio3 RK_PC1 GPIO_ACTIVE_LOW>;
 	vpcie3v3-supply = <&vcc3v3_pcie>;
 	status = "okay";
 };
 
-&gpio3 {
-	pcie_reset_hog {
-		gpio-hog;
-		gpios = <RK_PC1 GPIO_ACTIVE_HIGH>;
-		output-high;
-		line-name = "pcie-reset-hog";
-	};
-};
+
 
 &combphy2_psq {
 	assigned-clocks = <&pmucru 37>;
