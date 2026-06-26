@@ -481,9 +481,18 @@
 	phy-names = "pcie-phy";
 	pinctrl-names = "default";
 	pinctrl-0 = <&pcie_reset_pin>;
-	reset-gpios = <&gpio3 RK_PC1 GPIO_ACTIVE_HIGH>;
+	/delete-property/ reset-gpios;
 	vpcie3v3-supply = <&vcc3v3_pcie>;
 	status = "okay";
+};
+
+&gpio3 {
+	pcie_reset_hog {
+		gpio-hog;
+		gpios = <RK_PC1 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "pcie-reset-hog";
+	};
 };
 
 &combphy2_psq {
