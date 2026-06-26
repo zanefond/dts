@@ -484,20 +484,25 @@
 };
 
 &pcie2x1 {
-	compatible = "rockchip,rk3568-pcie";  /* 只留RK专属，消灭 dw-pcie 报错 */
+	/* 只留专属兼容性，避免双驱动抢占报错 */
+	compatible = "rockchip,rk3568-pcie";
 	status = "okay";
 	
 	num-lanes = <1>;
-	max-link-speed = <1>;    /* 强制 Gen1，大幅增加信号握手宽容度 */
-	aspm-no-l0s;             /* 禁用 L0s 节能，防止 RTL8111H 假死 */
+	max-link-speed = <2>;
+	
+	/* 关键防死机参数，禁用低功耗状态，这对 RTL8111H 是救命稻草 */
+	aspm-no-l0s;
 	
 	phys = <&combphy2_psq 2>;
 	phy-names = "pcie-phy";
+	pinctrl-names = "default";
+	pinctrl-0 = <&pcie_reset_pin>;
+	
+	/* ！！！绝杀修正：必须是 ACTIVE_LOW！让 6.1 内核在唤醒时输出物理高电平 ！！！ */
+	reset-gpios = <&gpio3 RK_PC1 GPIO_ACTIVE_LOW>;
 	
 	vpcie3v3-supply = <&vcc3v3_pcie_dummy>;
-	
-	/* 绝对不要写 reset-gpios，让上面的 Hog 完全接管 */
-	/delete-property/ reset-gpios;
 };
 
 
@@ -1678,11 +1683,3 @@
 	};
 };
 
-&gpio3 {
-	pcie_rst_hog {
-		gpio-hog;
-		gpios = <RK_PC1 GPIO_ACTIVE_HIGH>;
-		output-high;       /* 永远拉高，彻底解除复位锁定 */
-		line-name = "pcie-reset-hog";
-	};
-};
