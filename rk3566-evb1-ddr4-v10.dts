@@ -1175,8 +1175,6 @@
 };
 
 &hdmi {
-	avdd-0v9-supply = <&vdda0v9_image>;
-	avdd-1v8-supply = <&vcca1v8_image>;
 	#sound-dai-cells = <0>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&hdmitxm0_cec &hdmitx_scl &hdmitx_sda>;
