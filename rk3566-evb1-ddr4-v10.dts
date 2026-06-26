@@ -116,6 +116,7 @@
 		regulator-name = "vcc3v3_pcie";
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
+		/delete-property/ gpio;
 		enable-active-high;
 		startup-delay-us = <5000>;
 		vin-supply = <&vcc5v0_sys>;
@@ -477,6 +478,8 @@
 	num-lanes = <1>;
 	phys = <&combphy2_psq 2>;
 	phy-names = "pcie-phy";
+	pinctrl-names = "default";
+	pinctrl-0 = <&pcie20m1_pins>;
 	reset-gpios = <&gpio3 RK_PC1 GPIO_ACTIVE_HIGH>;
 	vpcie3v3-supply = <&vcc3v3_pcie>;
 	status = "okay";
@@ -1178,6 +1181,10 @@
 
 &hdmi {
 	#sound-dai-cells = <0>;
+	/delete-property/ avdd-0v9-supply;
+	/delete-property/ avdd-1v8-supply;
+	/delete-property/ rockchip,hpd-gpios;
+	/delete-property/ hpd-gpios;
 	pinctrl-names = "default";
 	pinctrl-0 = <&hdmitxm0_cec &hdmitx_scl &hdmitx_sda>;
 	rockchip,phy-table = <0x58834d4 0x8009 0x00 0x270 0x9d5b340 0x800b 0x00 0x209 0xb1069a8 0x800b 0x00 0x1ed 0x11b3dc40 0x800b 0x00 0x1ad 0x2367b880 0x8029 0x00 0x88 0x00 0x00 0x00 0x00>;
