@@ -46,6 +46,15 @@
 		stdout-path = "serial2:1500000n8";
 	};
 
+	vcc3v3_pcie_dummy: vcc3v3-pcie-dummy {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc3v3_pcie_dummy";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		regulator-always-on;
+		regulator-boot-on;
+	};
+
 	dc_12v: dc-12v {
 		compatible = "regulator-fixed";
 		regulator-name = "dc_12v";
@@ -476,6 +485,10 @@
 
 &pcie2x1 {
 	compatible = "rockchip,rk3568-pcie";
+	reg = <0x3 0xc0000000 0x0 0x00400000>,
+	      <0x0 0xfe260000 0x0 0x00010000>,
+	      <0x3 0x00000000 0x0 0x01000000>;
+	reg-names = "dbi", "apb", "config";
 	num-lanes = <1>;
 	max-link-speed = <1>;
 	phys = <&combphy2_psq 2>;
@@ -483,7 +496,7 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pcie_reset_pin>;
 	reset-gpios = <&gpio3 RK_PC1 GPIO_ACTIVE_LOW>;
-	vpcie3v3-supply = <&vcc3v3_pcie>;
+	vpcie3v3-supply = <&vcc3v3_pcie_dummy>;
 	status = "okay";
 };
 
