@@ -53,15 +53,6 @@
 		regulator-max-microvolt = <3300000>;
 		regulator-always-on;
 		regulator-boot-on;
-		
-		/* ！！！终极 Hack：用电源框架接管复位引脚！！！ */
-		enable-active-high;
-		gpio = <&gpio3 RK_PC1 GPIO_ACTIVE_HIGH>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&pcie_reset_pin>;
-		
-		/* 强制系统在拉高引脚后，死等 100ms，满足 RTL8111H 的硬件时序要求 */
-		startup-delay-us = <100000>; 
 	};
 
 	dc_12v: dc-12v {
@@ -493,24 +484,20 @@
 };
 
 &pcie2x1 {
-	/* 彻底屏蔽 snps,dw-pcie，消除 invalid resource 报错 */
-	compatible = "rockchip,rk3568-pcie"; 
+	compatible = "rockchip,rk3568-pcie";  /* 只留RK专属，消灭 dw-pcie 报错 */
 	status = "okay";
 	
-	/* 恢复原厂的 Gen 2 速度，提升握手成功率 */
 	num-lanes = <1>;
-	max-link-speed = <2>;
+	max-link-speed = <1>;    /* 强制 Gen1，大幅增加信号握手宽容度 */
+	aspm-no-l0s;             /* 禁用 L0s 节能，防止 RTL8111H 假死 */
 	
 	phys = <&combphy2_psq 2>;
 	phy-names = "pcie-phy";
 	
-	/* 关联上面的神级 Hack 电源 */
 	vpcie3v3-supply = <&vcc3v3_pcie_dummy>;
 	
-	/* ！！！最重要的一步：彻底删除 reset-gpios 属性 ！！！*/
+	/* 绝对不要写 reset-gpios，让上面的 Hog 完全接管 */
 	/delete-property/ reset-gpios;
-	/delete-property/ pinctrl-names;
-	/delete-property/ pinctrl-0;
 };
 
 
@@ -518,6 +505,7 @@
 &combphy2_psq {
 	assigned-clocks = <&pmucru 37>;
 	assigned-clock-rates = <100000000>;
+	rockchip,enable-ssc;    /* 开启扩频时钟，迎合 Realtek 网卡的胃口 */
 	status = "okay";
 };
 
@@ -1687,5 +1675,14 @@
 		tr5511_pin: tr5511-pin {
 			rockchip,pins = <3 RK_PA3 0 &pcfg_pull_none>;
 		};
+	};
+};
+
+&gpio3 {
+	pcie_rst_hog {
+		gpio-hog;
+		gpios = <RK_PC1 GPIO_ACTIVE_HIGH>;
+		output-high;       /* 永远拉高，彻底解除复位锁定 */
+		line-name = "pcie-reset-hog";
 	};
 };
