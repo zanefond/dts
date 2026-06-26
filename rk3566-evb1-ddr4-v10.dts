@@ -479,6 +479,8 @@
 	max-link-speed = <2>;
 	phys = <&combphy2_psq 2>;
 	phy-names = "pcie-phy";
+	pinctrl-names = "default";
+	pinctrl-0 = <&pcie_reset_pin>;
 	reset-gpios = <&gpio3 RK_PC1 GPIO_ACTIVE_HIGH>;
 	vpcie3v3-supply = <&vcc3v3_pcie>;
 	status = "okay";
@@ -1608,6 +1610,9 @@
 	};
 
 		pcie {
+			pcie_reset_pin: pcie-reset-pin {
+				rockchip,pins = <3 RK_PC1 0 &pcfg_pull_none>;
+			};
 		};
 
 		edp {
