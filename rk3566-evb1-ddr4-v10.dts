@@ -314,6 +314,39 @@
 			press-threshold-microvolt = <1300000>;
 		};
 	};
+
+	panel_edp: panel-edp {
+		compatible = "simple-panel";
+		backlight = <&backlight>;
+		enable-gpios = <&gpio0 RK_PC4 GPIO_ACTIVE_HIGH>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&edp_vdd_en_gpio>;
+		enable-delay-ms = <200>;
+		prepare-delay-ms = <200>;
+		reset-delay-ms = <200>;
+		init-delay-ms = <200>;
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+
+				panel_in_edp: endpoint {
+					remote-endpoint = <&edp_out_panel>;
+				};
+			};
+		};
+	};
+
+	watchdog {
+		compatible = "linux,wdt-gpio";
+		gpios = <&gpio4 RK_PB1 GPIO_ACTIVE_HIGH>;
+		hw_algo = "toggle";
+		hw_margin_ms = <1000>;
+		always-running;
+	};
 };
 
 &cpu0 {
@@ -1215,15 +1248,30 @@
 };
 
 &route_edp {
-	status = "disabled";
+	status = "okay";
 };
 
 &hdmi_in_vp0 {
 	status = "okay";
 };
 
+&edp_in_vp1 {
+	status = "okay";
+};
+
 &edp {
-	status = "disabled";
+	force-hpd;
+	status = "okay";
+
+	ports {
+		port@1 {
+			reg = <1>;
+
+			edp_out_panel: endpoint {
+				remote-endpoint = <&panel_in_edp>;
+			};
+		};
+	};
 };
 
 &dsi0 {
@@ -1235,7 +1283,7 @@
 };
 
 &edp_phy {
-	status = "disabled";
+	status = "okay";
 };
 
 &pmu_io_domains {

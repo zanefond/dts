@@ -38,7 +38,11 @@ jobs:
       - name: Build DTB
         run: |
           cd linux-kernel
-          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
+          if [ -f arch/arm64/configs/rockchip_linux_defconfig ]; then
+            make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- rockchip_linux_defconfig
+          else
+            make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
+          fi
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
             DTC_FLAGS="-Wno-phandle_references" \
             rockchip/rk3566-evb1-ddr4-v10.dtb
