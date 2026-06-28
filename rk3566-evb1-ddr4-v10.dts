@@ -1006,7 +1006,7 @@
 &uart2 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart2m0_xfer>;
-	status = "disabled";
+	status = "okay";
 };
 
 &uart3 {
